@@ -1,23 +1,99 @@
 {
   "name": "scriptguard",
-  "version": "0.1.0",
-  "private": true,
+  "displayName": "ScriptGuard — SuiteScript Code Reviewer",
+  "description": "Production-focused SuiteScript code review. Catches governance risks, performance anti-patterns, and scalability failures before they hit production.",
+  "version": "1.0.0",
+  "publisher": "adaptive-solutions-group",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mpagani-adaptive/scriptguard"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "suitescript",
+    "netsuite",
+    "code review",
+    "governance",
+    "erp",
+    "suitescript review",
+    "netsuite governance"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "scriptguard.reviewCode",
+        "title": "ScriptGuard: Review Selected Code"
+      },
+      {
+        "command": "scriptguard.reviewFile",
+        "title": "ScriptGuard: Review Entire File"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "scriptguard.reviewCode",
+          "when": "editorHasSelection",
+          "group": "scriptguard@1"
+        },
+        {
+          "command": "scriptguard.reviewFile",
+          "group": "scriptguard@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ScriptGuard",
+      "properties": {
+        "scriptguard.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Optional: Anthropic API key for AI-enhanced review. Static analysis works without this.",
+          "order": 1
+        },
+        "scriptguard.aiModel": {
+          "type": "string",
+          "default": "claude-sonnet-4-20250514",
+          "enum": [
+            "claude-sonnet-4-20250514",
+            "claude-haiku-4-5-20251001"
+          ],
+          "description": "Claude model for AI-enhanced review.",
+          "order": 2
+        },
+        "scriptguard.enableAI": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI-enhanced review (requires API key).",
+          "order": 3
+        }
+      }
+    }
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build": "npm run compile",
+    "package": "npx @vscode/vsce package"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.88.0",
-    "next": "14.2.35",
-    "react": "^18",
-    "react-dom": "^18"
+    "acorn": "^8.14.1",
+    "acorn-walk": "^8.3.4",
+    "@anthropic-ai/sdk": "^0.39.0"
   },
   "devDependencies": {
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1"
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
   }
 }
