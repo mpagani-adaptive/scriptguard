@@ -9,7 +9,7 @@ let currentPanel: vscode.WebviewPanel | null = null;
 export function activate(context: vscode.ExtensionContext) {
   // Command: Review selected code
   context.subscriptions.push(
-    vscode.commands.registerCommand('scriptguard.reviewCode', () => {
+    vscode.commands.registerCommand('suitelens.reviewCode', () => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
         vscode.window.showWarningMessage('No active editor.');
@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Command: Review entire file
   context.subscriptions.push(
-    vscode.commands.registerCommand('scriptguard.reviewFile', () => {
+    vscode.commands.registerCommand('suitelens.reviewFile', () => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
         vscode.window.showWarningMessage('No active editor.');
@@ -60,7 +60,7 @@ async function runReview(
     panel.webview.postMessage({ type: 'review', result: staticResult });
 
     // Step 2: Optional AI enhancement
-    const config = vscode.workspace.getConfiguration('scriptguard');
+    const config = vscode.workspace.getConfiguration('suitelens');
     const aiEnabled = config.get<boolean>('enableAI', false);
     const apiKey = config.get<string>('anthropicApiKey', '');
     const model = config.get<string>('aiModel', 'claude-sonnet-4-20250514');
@@ -89,7 +89,7 @@ async function runReview(
 }
 
 // Diagnostics collection for inline highlighting
-const diagnosticCollection = vscode.languages.createDiagnosticCollection('scriptguard');
+const diagnosticCollection = vscode.languages.createDiagnosticCollection('suitelens');
 
 function highlightFindings(result: ReviewResult, editor: vscode.TextEditor) {
   const diagnostics: vscode.Diagnostic[] = [];
@@ -108,8 +108,8 @@ function highlightFindings(result: ReviewResult, editor: vscode.TextEditor) {
       finding.severity === 'warning' ? vscode.DiagnosticSeverity.Warning :
       vscode.DiagnosticSeverity.Information;
 
-    const diag = new vscode.Diagnostic(range, `[ScriptGuard] ${finding.title}: ${finding.issue}`, severity);
-    diag.source = 'ScriptGuard';
+    const diag = new vscode.Diagnostic(range, `[SuiteLens] ${finding.title}: ${finding.issue}`, severity);
+    diag.source = 'SuiteLens';
     diagnostics.push(diag);
   }
 
@@ -123,8 +123,8 @@ function getOrCreatePanel(context: vscode.ExtensionContext): vscode.WebviewPanel
   }
 
   const panel = vscode.window.createWebviewPanel(
-    'scriptguardReview',
-    'ScriptGuard Review',
+    'suitelensReview',
+    'SuiteLens Review',
     vscode.ViewColumn.Beside,
     { enableScripts: true },
   );

@@ -1,5 +1,5 @@
 /**
- * Returns the HTML content for the ScriptGuard review panel.
+ * Returns the HTML content for the SuiteLens review panel.
  * Uses VS Code's CSS variables for native theme integration.
  */
 export function getWebviewContent(): string {
@@ -121,9 +121,9 @@ export function getWebviewContent(): string {
 </head>
 <body>
   <div id="initial">
-    <h1>ScriptGuard</h1>
+    <h1>SuiteLens</h1>
     <p>Select SuiteScript code → right-click → <strong>Review Selected Code</strong><br>
-    or use the Command Palette: <strong>ScriptGuard: Review Selected Code</strong></p>
+    or use the Command Palette: <strong>SuiteLens: Review Selected Code</strong></p>
   </div>
   <div id="loading" style="display:none">
     <div class="loading"><div class="spinner"></div> Running static analysis...</div>
@@ -168,7 +168,7 @@ export function getWebviewContent(): string {
 
       // Header
       html += '<div class="header">';
-      html += '<h1>ScriptGuard Review</h1>';
+      html += '<h1>SuiteLens Review</h1>';
       html += '<span class="badge risk-' + r.riskLevel + '">' + r.riskLevel + ' RISK</span>';
       if (r.aiEnhanced) html += '<span class="badge" style="background:#1a3a5a;color:#60a5fa">AI Enhanced</span>';
       html += '</div>';

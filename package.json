@@ -1,6 +1,6 @@
 {
-  "name": "scriptguard",
-  "displayName": "ScriptGuard — SuiteScript Code Reviewer",
+  "name": "suitelens",
+  "displayName": "SuiteLens — SuiteScript Code Reviewer",
   "description": "Production-focused SuiteScript code review. Catches governance risks, performance anti-patterns, and scalability failures before they hit production.",
   "version": "1.0.0",
   "publisher": "adaptive-solutions-group",
@@ -31,37 +31,37 @@
   "contributes": {
     "commands": [
       {
-        "command": "scriptguard.reviewCode",
-        "title": "ScriptGuard: Review Selected Code"
+        "command": "suitelens.reviewCode",
+        "title": "SuiteLens: Review Selected Code"
       },
       {
-        "command": "scriptguard.reviewFile",
-        "title": "ScriptGuard: Review Entire File"
+        "command": "suitelens.reviewFile",
+        "title": "SuiteLens: Review Entire File"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "scriptguard.reviewCode",
+          "command": "suitelens.reviewCode",
           "when": "editorHasSelection",
-          "group": "scriptguard@1"
+          "group": "suitelens@1"
         },
         {
-          "command": "scriptguard.reviewFile",
-          "group": "scriptguard@2"
+          "command": "suitelens.reviewFile",
+          "group": "suitelens@2"
         }
       ]
     },
     "configuration": {
-      "title": "ScriptGuard",
+      "title": "SuiteLens",
       "properties": {
-        "scriptguard.anthropicApiKey": {
+        "suitelens.anthropicApiKey": {
           "type": "string",
           "default": "",
           "description": "Optional: Anthropic API key for AI-enhanced review. Static analysis works without this.",
           "order": 1
         },
-        "scriptguard.aiModel": {
+        "suitelens.aiModel": {
           "type": "string",
           "default": "claude-sonnet-4-20250514",
           "enum": [
@@ -71,7 +71,7 @@
           "description": "Claude model for AI-enhanced review.",
           "order": 2
         },
-        "scriptguard.enableAI": {
+        "suitelens.enableAI": {
           "type": "boolean",
           "default": false,
           "description": "Enable AI-enhanced review (requires API key).",
