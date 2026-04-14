@@ -12,27 +12,28 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
-    --bg: #09090b;
-    --surface: #111113;
-    --surface-raised: #18181b;
-    --border: #27272a;
-    --text: #fafafa;
-    --text-secondary: #a1a1aa;
-    --muted: #71717a;
-    --red: #ef4444;
+    /* Shared design system — matches ADSG + SuiteRX */
+    --bg: #0B0F1A;
+    --surface: #111827;
+    --surface-raised: #1a2032;
+    --border: #1F2937;
+    --primary: #1E3A8A;
+    --text: #E5E7EB;
+    --text-secondary: #9CA3AF;
+    --muted: #6B7280;
+    /* SuiteLens-specific accents */
+    --red: #EF4444;
     --red-dim: rgba(239, 68, 68, 0.12);
-    --amber: #f59e0b;
+    --amber: #F59E0B;
     --amber-dim: rgba(245, 158, 11, 0.12);
-    --green: #22c55e;
+    --green: #10B981;
     --blue: #3b82f6;
-    --accent: #6366f1;
-    --accent-dim: rgba(99, 102, 241, 0.1);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
@@ -44,7 +45,7 @@
   /* NAV */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(9, 9, 11, 0.88);
+    background: rgba(11, 15, 26, 0.88);
     backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
   }
@@ -55,7 +56,7 @@
   }
   .logo { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; color: var(--text); }
   .logo-mark {
-    width: 26px; height: 26px; background: var(--accent); border-radius: 6px;
+    width: 26px; height: 26px; background: var(--primary); border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; color: #fff; font-weight: 800;
   }
@@ -104,11 +105,6 @@
   .hero-image {
     max-width: 1060px; margin: 0 auto; padding: 0 24px 80px;
   }
-  .hero-image img {
-    width: 100%; border-radius: 12px;
-    border: 1px solid var(--border);
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-  }
   .hero-image-placeholder {
     width: 100%; aspect-ratio: 16/9;
     background: var(--surface);
@@ -143,7 +139,7 @@
     border-radius: 10px; padding: 20px 22px;
     transition: border-color 0.15s;
   }
-  .find-card:hover { border-color: #3f3f46; }
+  .find-card:hover { border-color: #374151; }
   .find-severity {
     display: inline-block; font-size: 10px; font-weight: 700;
     padding: 2px 8px; border-radius: 4px;
@@ -153,6 +149,10 @@
   .sev-warning { background: var(--amber-dim); color: var(--amber); }
   .find-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
   .find-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .find-card code {
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+    background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 3px;
+  }
 
   /* CONSEQUENCES */
   .consequences-grid {
@@ -173,7 +173,6 @@
   .step {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 10px; padding: 24px 20px;
-    position: relative;
   }
   .step-number {
     font-size: 32px; font-weight: 800; color: var(--border);
@@ -181,6 +180,10 @@
   }
   .step h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
   .step p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+  .step code {
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+    background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 3px;
+  }
 
   /* PREVIEW */
   .preview-section { padding: 0 24px 80px; }
@@ -188,11 +191,6 @@
   .preview-label {
     font-size: 12px; font-weight: 700; color: var(--muted);
     text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;
-  }
-  .preview-img {
-    width: 100%; border-radius: 12px;
-    border: 1px solid var(--border);
-    box-shadow: 0 16px 60px rgba(0,0,0,0.4);
   }
   .preview-placeholder {
     width: 100%; aspect-ratio: 16/9;
@@ -434,7 +432,7 @@
 
 <!--
   IMAGE SPEC — og.png (Open Graph / social sharing):
-  Dark background (#09090b). SuiteLens logo mark on the left.
+  Dark background (#0B0F1A). SuiteLens logo mark on the left.
   Large text: "Your SuiteScript has problems you haven't found yet."
   Smaller text below: "Free VS Code extension — suitelens.adsg.cc"
   Adaptive Solutions Group branding in bottom-right corner.
