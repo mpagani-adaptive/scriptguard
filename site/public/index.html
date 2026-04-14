@@ -3,21 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SuiteLens — SuiteScript Code Reviewer for VS Code</title>
-<meta name="description" content="Catch governance risks, performance anti-patterns, and scalability failures in your SuiteScript code before they hit production.">
+<title>SuiteLens — Find what's actually wrong in your SuiteScript</title>
+<meta name="description" content="Your SuiteScript passed testing. It will still break in production. SuiteLens finds governance bombs, overloaded User Events, and silent failures before your users do.">
+<meta property="og:title" content="SuiteLens — Your SuiteScript has problems you haven't found yet">
+<meta property="og:description" content="Static analysis for SuiteScript that catches the issues QA never will. Free VS Code extension.">
+<meta property="og:image" content="/images/og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --border: #1e1e2e;
-    --text: #e4e4ef;
-    --muted: #8888a0;
-    --accent: #6366f1;
-    --accent-glow: rgba(99, 102, 241, 0.15);
-    --critical: #ef4444;
-    --warning: #f59e0b;
+    --bg: #09090b;
+    --surface: #111113;
+    --surface-raised: #18181b;
+    --border: #27272a;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --muted: #71717a;
+    --red: #ef4444;
+    --red-dim: rgba(239, 68, 68, 0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245, 158, 11, 0.12);
     --green: #22c55e;
     --blue: #3b82f6;
+    --accent: #6366f1;
+    --accent-dim: rgba(99, 102, 241, 0.1);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,427 +39,407 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  a { color: var(--accent); text-decoration: none; }
+  a { color: inherit; text-decoration: none; }
 
   /* NAV */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(10, 10, 15, 0.85);
-    backdrop-filter: blur(12px);
+    background: rgba(9, 9, 11, 0.88);
+    backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
   }
   .nav-inner {
-    max-width: 1100px; margin: 0 auto;
+    max-width: 1060px; margin: 0 auto; padding: 0 24px;
     display: flex; align-items: center; justify-content: space-between;
-    height: 60px;
+    height: 56px;
   }
-  .logo { font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-  .logo-icon {
-    width: 28px; height: 28px; background: var(--accent); border-radius: 6px;
+  .logo { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; color: var(--text); }
+  .logo-mark {
+    width: 26px; height: 26px; background: var(--accent); border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: #fff; font-weight: 800;
+    font-size: 12px; color: #fff; font-weight: 800;
   }
-  .nav-links { display: flex; gap: 32px; align-items: center; }
-  .nav-links a { color: var(--muted); font-size: 14px; font-weight: 500; transition: color 0.2s; }
+  .nav-links { display: flex; gap: 28px; align-items: center; }
+  .nav-links a { color: var(--muted); font-size: 13px; font-weight: 500; transition: color 0.15s; }
   .nav-links a:hover { color: var(--text); }
 
   /* HERO */
   .hero {
-    padding: 140px 24px 80px;
-    text-align: center;
-    background: radial-gradient(ellipse at 50% 0%, var(--accent-glow) 0%, transparent 60%);
+    padding: 140px 24px 60px;
+    max-width: 760px; margin: 0 auto;
   }
-  .hero-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 6px 14px; border-radius: 20px;
-    font-size: 13px; color: var(--muted); margin-bottom: 24px;
+  .hero-eyebrow {
+    font-size: 13px; font-weight: 600; color: var(--red);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 20px;
   }
-  .hero-badge .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
-  .hero h1 { font-size: clamp(36px, 5vw, 56px); font-weight: 800; line-height: 1.15; max-width: 700px; margin: 0 auto 20px; }
-  .hero h1 span { color: var(--accent); }
-  .hero p { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 auto 36px; line-height: 1.7; }
-  .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .hero h1 {
+    font-size: clamp(32px, 4.5vw, 48px); font-weight: 800;
+    line-height: 1.15; margin-bottom: 20px;
+    color: var(--text);
+  }
+  .hero-sub {
+    font-size: 18px; color: var(--text-secondary); line-height: 1.7;
+    max-width: 600px; margin-bottom: 36px;
+  }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 48px; }
 
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 12px 24px; border-radius: 8px;
-    font-size: 15px; font-weight: 600; cursor: pointer;
-    border: none; transition: all 0.2s;
+    padding: 13px 28px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    border: none; transition: all 0.15s;
   }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #5558e6; transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
-  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-download {
+    background: var(--red); color: #fff;
+  }
+  .btn-download:hover { background: #dc2626; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(239,68,68,0.25); }
+  .btn-ghost {
+    background: transparent; color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--text-secondary); color: var(--text); }
 
-  /* DEMO */
-  .demo-section { padding: 0 24px 80px; }
-  .demo-window {
-    max-width: 800px; margin: 0 auto;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  /* HERO IMAGE */
+  .hero-image {
+    max-width: 1060px; margin: 0 auto; padding: 0 24px 80px;
   }
-  .demo-titlebar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 12px 16px; border-bottom: 1px solid var(--border);
-    font-size: 12px; color: var(--muted);
+  .hero-image img {
+    width: 100%; border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
   }
-  .demo-dots { display: flex; gap: 6px; }
-  .demo-dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
-  .demo-body { padding: 20px; }
-  .demo-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-  .demo-header h3 { font-size: 15px; font-weight: 700; }
-  .demo-badge {
-    font-size: 10px; font-weight: 700; padding: 3px 10px;
-    border-radius: 10px; text-transform: uppercase;
-  }
-  .demo-finding {
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: 14px; margin-bottom: 10px;
-  }
-  .demo-finding-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .demo-finding-title { font-weight: 700; font-size: 13px; }
-  .demo-label { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-top: 8px; margin-bottom: 2px; }
-  .demo-text { font-size: 12px; color: var(--muted); }
-  .demo-evidence {
-    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px;
-    background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 4px;
-    border-left: 3px solid var(--critical); margin-top: 4px; color: #ccc;
-  }
-
-  /* FEATURES */
-  .features { padding: 80px 24px; }
-  .section-header { text-align: center; margin-bottom: 48px; }
-  .section-header h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
-  .section-header p { color: var(--muted); font-size: 16px; max-width: 500px; margin: 0 auto; }
-  .features-grid {
-    max-width: 1100px; margin: 0 auto;
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;
-  }
-  .feature-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 24px;
-    transition: border-color 0.2s;
-  }
-  .feature-card:hover { border-color: #2a2a3e; }
-  .feature-icon {
-    width: 40px; height: 40px; border-radius: 10px;
+  .hero-image-placeholder {
+    width: 100%; aspect-ratio: 16/9;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; margin-bottom: 14px;
+    color: var(--muted); font-size: 14px;
   }
-  .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-  .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
-  /* RULES */
-  .rules { padding: 80px 24px; }
-  .rules-grid {
-    max-width: 800px; margin: 0 auto;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  /* SECTION BASE */
+  .section { padding: 80px 24px; }
+  .section-inner { max-width: 1060px; margin: 0 auto; }
+  .section-label {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
   }
-  .rule-item {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 14px 16px;
+  .section-title {
+    font-size: clamp(24px, 3vw, 32px); font-weight: 800;
+    margin-bottom: 16px; line-height: 1.2;
   }
-  .rule-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .rule-name { font-size: 13px; font-weight: 600; }
-  .rule-desc { font-size: 12px; color: var(--muted); }
+  .section-desc {
+    font-size: 16px; color: var(--text-secondary); max-width: 520px;
+    line-height: 1.7; margin-bottom: 40px;
+  }
 
-  /* INSTALL */
-  .install { padding: 80px 24px; }
-  .install-steps {
-    max-width: 700px; margin: 0 auto;
-    display: grid; gap: 16px;
+  /* FINDS GRID */
+  .finds-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
   }
-  .install-step {
-    display: flex; gap: 16px; align-items: flex-start;
+  .find-card {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 20px;
+    border-radius: 10px; padding: 20px 22px;
+    transition: border-color 0.15s;
   }
-  .step-num {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--accent-glow); border: 1px solid var(--accent);
+  .find-card:hover { border-color: #3f3f46; }
+  .find-severity {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+  }
+  .sev-critical { background: var(--red-dim); color: var(--red); }
+  .sev-warning { background: var(--amber-dim); color: var(--amber); }
+  .find-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .find-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* CONSEQUENCES */
+  .consequences-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .consequence {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px 20px;
+    border-top: 2px solid var(--red);
+  }
+  .consequence h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .consequence p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .step {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px 20px;
+    position: relative;
+  }
+  .step-number {
+    font-size: 32px; font-weight: 800; color: var(--border);
+    margin-bottom: 12px; line-height: 1;
+  }
+  .step h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .step p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+  /* PREVIEW */
+  .preview-section { padding: 0 24px 80px; }
+  .preview-wrapper { max-width: 1060px; margin: 0 auto; }
+  .preview-label {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;
+  }
+  .preview-img {
+    width: 100%; border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 16px 60px rgba(0,0,0,0.4);
+  }
+  .preview-placeholder {
+    width: 100%; aspect-ratio: 16/9;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: var(--accent); flex-shrink: 0;
-  }
-  .step-content h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-  .step-content p { font-size: 13px; color: var(--muted); }
-  .step-content code {
-    display: inline-block; background: rgba(0,0,0,0.3); padding: 2px 8px;
-    border-radius: 4px; font-family: monospace; font-size: 12px; margin-top: 4px;
+    color: var(--muted); font-size: 14px;
   }
 
   /* CTA */
-  .cta {
-    padding: 80px 24px;
+  .final-cta {
+    padding: 80px 24px 100px;
     text-align: center;
-    background: radial-gradient(ellipse at 50% 100%, var(--accent-glow) 0%, transparent 60%);
   }
-  .cta h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
-  .cta p { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
+  .final-cta h2 {
+    font-size: clamp(24px, 3vw, 36px); font-weight: 800;
+    margin-bottom: 12px;
+  }
+  .final-cta p {
+    font-size: 16px; color: var(--text-secondary);
+    margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto;
+  }
+  .final-cta .hero-actions { justify-content: center; }
 
   /* FOOTER */
   footer {
     border-top: 1px solid var(--border);
-    padding: 32px 24px; text-align: center;
-    font-size: 13px; color: var(--muted);
+    padding: 28px 24px; text-align: center;
+    font-size: 12px; color: var(--muted);
   }
-  footer a { color: var(--muted); }
-  footer a:hover { color: var(--text); }
+  footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+  footer a:hover { color: var(--text-secondary); }
 
-  @media (max-width: 640px) {
-    .rules-grid { grid-template-columns: 1fr; }
+  @media (max-width: 768px) {
+    .finds-grid { grid-template-columns: 1fr; }
+    .consequences-grid { grid-template-columns: 1fr 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
     .nav-links { gap: 16px; }
+  }
+  @media (max-width: 480px) {
+    .consequences-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <div class="nav-inner">
     <div class="logo">
-      <div class="logo-icon">SL</div>
+      <div class="logo-mark">SL</div>
       SuiteLens
     </div>
     <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#rules">Rules</a>
-      <a href="#install">Install</a>
+      <a href="#finds">What It Finds</a>
+      <a href="#why">Why It Matters</a>
+      <a href="#how">How It Works</a>
       <a href="https://github.com/mpagani-adaptive/scriptguard" target="_blank">GitHub</a>
     </div>
   </div>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
-  <div class="hero-badge"><span class="dot"></span> v1.0 — Free &amp; Open Source</div>
-  <h1>Stop SuiteScript bugs <span>before production</span></h1>
-  <p>SuiteLens catches governance risks, performance anti-patterns, and scalability failures in your NetSuite scripts — right inside VS Code.</p>
+  <div class="hero-eyebrow">Your scripts passed QA. They'll still break.</div>
+  <h1>Your SuiteScript has problems you haven't found yet.</h1>
+  <p class="hero-sub">SuiteLens is a VS Code extension that scans your SuiteScript for governance bombs, overloaded User Events, and the silent failures that only show up when real users hit real data at real volume.</p>
   <div class="hero-actions">
-    <a href="https://github.com/mpagani-adaptive/scriptguard/releases/latest" class="btn btn-primary" id="download-btn">
+    <a href="https://github.com/mpagani-adaptive/scriptguard/releases/latest" class="btn btn-download">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1H3v-1z"/></svg>
-      Download .vsix
+      Download for VS Code
     </a>
-    <a href="https://github.com/mpagani-adaptive/scriptguard" class="btn btn-secondary" target="_blank">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      View Source
-    </a>
+    <a href="https://github.com/mpagani-adaptive/scriptguard" class="btn btn-ghost" target="_blank">View source on GitHub</a>
   </div>
 </section>
 
-<section class="demo-section">
-  <div class="demo-window">
-    <div class="demo-titlebar">
-      <div class="demo-dots"><span></span><span></span><span></span></div>
-      SuiteLens Review
-    </div>
-    <div class="demo-body">
-      <div class="demo-header">
-        <h3>SuiteLens Review</h3>
-        <span class="demo-badge" style="background:#7a1d1d;color:#ff6b6b">CRITICAL RISK</span>
-        <span class="demo-badge" style="background:#1a3a5a;color:#60a5fa">AI Enhanced</span>
-      </div>
+<!-- HERO IMAGE: /images/hero.png -->
+<!--
+  IMAGE SPEC — hero.png:
+  A dark-themed screenshot of SuiteLens running inside VS Code.
+  The review panel is open on the right showing 2-3 findings with
+  CRITICAL and WARNING severity badges. The left pane shows a
+  SuiteScript file with a User Event function. The overall feel
+  should be "this tool just found something serious in my code."
+  Dimensions: 1920x1080, dark editor theme.
+-->
+<div class="hero-image">
+  <div class="hero-image-placeholder">/images/hero.png — VS Code screenshot with SuiteLens findings panel open</div>
+</div>
 
-      <div class="demo-finding">
-        <div class="demo-finding-head">
-          <span class="demo-finding-title">Record Load Inside Loop</span>
-          <span class="demo-badge" style="background:#7a1d1d;color:#ff6b6b">critical</span>
-        </div>
-        <div class="demo-label">Evidence</div>
-        <div class="demo-evidence">record.load({ type: 'salesorder', id: ids[i] })</div>
-        <div class="demo-label">Why It Matters</div>
-        <div class="demo-text">Each record.load() consumes 10 governance units. Inside a loop processing 200+ records, this exhausts the script's unit budget and causes a mid-execution crash.</div>
-        <div class="demo-label">Recommendation</div>
-        <div class="demo-text">Use search.lookupFields() for read-only access, or batch with N/query and Map/Reduce.</div>
-      </div>
+<!-- WHAT IT ACTUALLY FINDS -->
+<section class="section" id="finds">
+  <div class="section-inner">
+    <div class="section-label">What it actually finds</div>
+    <h2 class="section-title">The issues that only surface at 2 AM.</h2>
+    <p class="section-desc">Every rule exists because it has caused a real outage. Not hypothetical. Not theoretical. These are the patterns that ship through code review, pass QA, and detonate in production.</p>
 
-      <div class="demo-finding">
-        <div class="demo-finding-head">
-          <span class="demo-finding-title">Unbounded Search Results</span>
-          <span class="demo-badge" style="background:#5a3e1d;color:#fbbf24">warning</span>
-        </div>
-        <div class="demo-label">Evidence</div>
-        <div class="demo-evidence">search.create({ type: 'item' }).run().each(...)</div>
-        <div class="demo-label">Why It Matters</div>
-        <div class="demo-text">Without result limits, a search returning thousands of rows will time out or hit governance limits in scheduled and user-event contexts.</div>
+    <div class="finds-grid">
+      <div class="find-card">
+        <span class="find-severity sev-critical">Critical</span>
+        <h3>Record loads inside loops</h3>
+        <p>Each <code>record.load()</code> costs 10 governance units. Put it in a loop processing 500 sales orders and your scheduled script dies halfway through. Every time.</p>
       </div>
-    </div>
-  </div>
-</section>
-
-<section class="features" id="features">
-  <div class="section-header">
-    <h2>Built for NetSuite developers</h2>
-    <p>10 built-in rules targeting the most common SuiteScript production failures.</p>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(239,68,68,0.15);color:#ef4444">&#9888;</div>
-      <h3>Governance Analysis</h3>
-      <p>Detects record loads, searches, and API calls inside loops that burn through governance units and crash scripts mid-execution.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(59,130,246,0.15);color:#3b82f6">&#9889;</div>
-      <h3>Performance Patterns</h3>
-      <p>Flags unbounded searches, full-record saves, and heavy operations in User Event scripts that slow down the UI for every user.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(34,197,94,0.15);color:#22c55e">&#10003;</div>
-      <h3>Reliability Checks</h3>
-      <p>Catches missing error handling, absent idempotency guards, and hardcoded internal IDs that break across environments.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(168,85,247,0.15);color:#a855f7">&#127891;</div>
-      <h3>AI-Enhanced Review</h3>
-      <p>Optional Claude integration for deeper analysis — understands business logic context, not just syntax patterns. Bring your own API key.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b">&#128270;</div>
-      <h3>Static AST Analysis</h3>
-      <p>Powered by Acorn's JavaScript parser. Works offline, no API key required. Results in under a second, even on large scripts.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(99,102,241,0.15);color:#6366f1">&#127912;</div>
-      <h3>Native VS Code UI</h3>
-      <p>Review results render in a themed side panel that matches your editor. Severity badges, line references, and evidence snippets — no context switching.</p>
-    </div>
-  </div>
-</section>
-
-<section class="rules" id="rules">
-  <div class="section-header">
-    <h2>10 production-focused rules</h2>
-    <p>Every rule exists because it has caused a real production outage.</p>
-  </div>
-  <div class="rules-grid">
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--critical)"></span>
-      <div>
-        <div class="rule-name">Record Load in Loop</div>
-        <div class="rule-desc">Governance exhaustion</div>
+      <div class="find-card">
+        <span class="find-severity sev-critical">Critical</span>
+        <h3>Search calls inside loops</h3>
+        <p>Running <code>search.create()</code> per-record instead of batching. It works in sandbox with 50 records. It crashes in production with 12,000.</p>
       </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--critical)"></span>
-      <div>
-        <div class="rule-name">Search in Loop</div>
-        <div class="rule-desc">Governance exhaustion</div>
+      <div class="find-card">
+        <span class="find-severity sev-critical">Critical</span>
+        <h3>API calls inside loops</h3>
+        <p>HTTP requests to external systems inside a record loop. One slow endpoint response and your entire integration run times out.</p>
       </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--critical)"></span>
-      <div>
-        <div class="rule-name">API Call in Loop</div>
-        <div class="rule-desc">Governance exhaustion</div>
+      <div class="find-card">
+        <span class="find-severity sev-warning">Warning</span>
+        <h3>Overloaded User Events</h3>
+        <p>Heavy logic shoved into <code>beforeSubmit</code> because "it just runs on save." Until every sales rep waits 8 seconds to save an order.</p>
       </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--warning)"></span>
-      <div>
-        <div class="rule-name">Heavy User Event</div>
-        <div class="rule-desc">UI performance</div>
+      <div class="find-card">
+        <span class="find-severity sev-warning">Warning</span>
+        <h3>Unbounded search results</h3>
+        <p><code>.run().each()</code> with no result cap. Works fine until the item table grows past 10,000 rows and the script silently stops returning all results.</p>
       </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--warning)"></span>
-      <div>
-        <div class="rule-name">Full Record Save</div>
-        <div class="rule-desc">Unnecessary overhead</div>
+      <div class="find-card">
+        <span class="find-severity sev-warning">Warning</span>
+        <h3>Full record saves</h3>
+        <p>Calling <code>record.save()</code> when you only changed one field. Triggers every User Event, every workflow, every integration on that record. Again.</p>
       </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--warning)"></span>
-      <div>
-        <div class="rule-name">Unbounded Search</div>
-        <div class="rule-desc">Timeout risk</div>
+      <div class="find-card">
+        <span class="find-severity sev-warning">Warning</span>
+        <h3>No idempotency guards</h3>
+        <p>Script re-runs create duplicate records, double-post journals, or fire webhooks twice. "It only happened once" is never true.</p>
       </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--warning)"></span>
-      <div>
-        <div class="rule-name">No Idempotency</div>
-        <div class="rule-desc">Duplicate execution</div>
-      </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--warning)"></span>
-      <div>
-        <div class="rule-name">Hardcoded IDs</div>
-        <div class="rule-desc">Env portability</div>
-      </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--blue)"></span>
-      <div>
-        <div class="rule-name">Missing Error Handling</div>
-        <div class="rule-desc">Silent failures</div>
-      </div>
-    </div>
-    <div class="rule-item">
-      <span class="rule-dot" style="background:var(--blue)"></span>
-      <div>
-        <div class="rule-name">Dynamic Mode Abuse</div>
-        <div class="rule-desc">Unnecessary overhead</div>
+      <div class="find-card">
+        <span class="find-severity sev-warning">Warning</span>
+        <h3>Hardcoded internal IDs</h3>
+        <p>Works in production, breaks in sandbox, breaks again after the next account refresh. ID 47 means nothing without context.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="install" id="install">
-  <div class="section-header">
-    <h2>Get started in 60 seconds</h2>
-  </div>
-  <div class="install-steps">
-    <div class="install-step">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <h3>Download the extension</h3>
-        <p>Grab the latest <code>.vsix</code> file from the <a href="https://github.com/mpagani-adaptive/scriptguard/releases/latest">GitHub Releases</a> page.</p>
+<!-- WHY THIS MATTERS -->
+<section class="section" id="why" style="border-top: 1px solid var(--border);">
+  <div class="section-inner">
+    <div class="section-label">Why this matters</div>
+    <h2 class="section-title">These aren't bugs. They're time bombs.</h2>
+    <p class="section-desc">The script ran fine last time. That doesn't mean it's working. It means you haven't hit the edge case yet.</p>
+
+    <div class="consequences-grid">
+      <div class="consequence">
+        <h3>Governance crashes</h3>
+        <p>Scripts die mid-execution. Half the records process. The other half don't. Nobody gets an alert. Finance reconciles it two weeks later.</p>
+      </div>
+      <div class="consequence">
+        <h3>Silent data corruption</h3>
+        <p>Missing error handling means failures don't throw. Records save with bad data. Downstream reports look right until someone audits the numbers.</p>
+      </div>
+      <div class="consequence">
+        <h3>Integration failures</h3>
+        <p>A loop that worked with 200 records chokes at 2,000. The external system times out. Retry logic doesn't exist. Orders stop syncing.</p>
+      </div>
+      <div class="consequence">
+        <h3>User experience decay</h3>
+        <p>Overloaded User Events add seconds to every save. Users start avoiding the system. Workarounds proliferate. Data quality tanks.</p>
       </div>
     </div>
-    <div class="install-step">
-      <div class="step-num">2</div>
-      <div class="step-content">
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how" style="border-top: 1px solid var(--border);">
+  <div class="section-inner">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Install. Right-click. See what's wrong.</h2>
+    <p class="section-desc">No accounts. No configuration. No cloud dependencies. It runs locally in VS Code against your SuiteScript files.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">01</div>
+        <h3>Download the .vsix</h3>
+        <p>One file. No npm install, no build step, no dependencies.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">02</div>
         <h3>Install in VS Code</h3>
-        <p>Open VS Code, go to Extensions (<code>Ctrl+Shift+X</code>), click the <code>...</code> menu, and select <strong>Install from VSIX</strong>.</p>
+        <p>Extensions &rarr; <code>...</code> menu &rarr; Install from VSIX. Done in 10 seconds.</p>
       </div>
-    </div>
-    <div class="install-step">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <h3>Review your SuiteScript</h3>
-        <p>Right-click any SuiteScript file and select <strong>SuiteLens: Review Entire File</strong>, or select code and choose <strong>Review Selected Code</strong>.</p>
+      <div class="step">
+        <div class="step-number">03</div>
+        <h3>Right-click your script</h3>
+        <p>Select code or review an entire file. Results appear in a side panel instantly.</p>
       </div>
-    </div>
-    <div class="install-step">
-      <div class="step-num">&#9734;</div>
-      <div class="step-content">
-        <h3>Optional: Enable AI review</h3>
-        <p>Add your Anthropic API key in Settings &rarr; SuiteLens to get AI-enhanced analysis powered by Claude. Static analysis works without it.</p>
+      <div class="step">
+        <div class="step-number">04</div>
+        <h3>Fix what matters first</h3>
+        <p>Findings are ranked by severity. Critical issues first, suggestions last. Every finding explains why it matters.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="cta">
-  <h2>Ship SuiteScript with confidence</h2>
-  <p>Free, open source, and built by NetSuite developers for NetSuite developers.</p>
+<!-- DOWNLOAD PREVIEW: /images/download-preview.png -->
+<!--
+  IMAGE SPEC — download-preview.png:
+  A tighter crop of the SuiteLens review panel inside VS Code,
+  showing 3 findings stacked vertically. Each finding shows:
+  title, severity badge (CRITICAL in red, WARNING in amber),
+  an evidence code snippet, and the "Why It Matters" explanation.
+  Dark theme. Should feel like a real tool output, not a mockup.
+  Dimensions: 1200x800, dark editor theme.
+-->
+<div class="preview-section">
+  <div class="preview-wrapper">
+    <div class="preview-label">What you'll see</div>
+    <div class="preview-placeholder">/images/download-preview.png — Close-up of SuiteLens review panel with severity-ranked findings</div>
+  </div>
+</div>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <h2>Stop guessing what's wrong in your NetSuite environment.</h2>
+  <p>Free. Open source. Built by consultants who've debugged these exact problems in production.</p>
   <div class="hero-actions">
-    <a href="https://github.com/mpagani-adaptive/scriptguard/releases/latest" class="btn btn-primary">
+    <a href="https://github.com/mpagani-adaptive/scriptguard/releases/latest" class="btn btn-download">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1H3v-1z"/></svg>
-      Download SuiteLens
+      Download SuiteLens — it's free
     </a>
-    <a href="https://github.com/mpagani-adaptive/scriptguard" class="btn btn-secondary" target="_blank">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      View on GitHub
-    </a>
+    <a href="https://github.com/mpagani-adaptive/scriptguard" class="btn btn-ghost" target="_blank">View source on GitHub</a>
   </div>
 </section>
 
+<!-- FOOTER -->
 <footer>
-  <p>SuiteLens is MIT licensed &middot; Built by <a href="https://github.com/mpagani-adaptive">Adaptive Solutions Group</a></p>
+  MIT Licensed &middot; Built by <a href="https://adsg.cc">Adaptive Solutions Group</a> &middot; <a href="https://github.com/mpagani-adaptive/scriptguard">GitHub</a>
 </footer>
+
+<!--
+  IMAGE SPEC — og.png (Open Graph / social sharing):
+  Dark background (#09090b). SuiteLens logo mark on the left.
+  Large text: "Your SuiteScript has problems you haven't found yet."
+  Smaller text below: "Free VS Code extension — suitelens.adsg.cc"
+  Adaptive Solutions Group branding in bottom-right corner.
+  Dimensions: 1200x630.
+-->
 
 </body>
 </html>
