@@ -5,7 +5,6 @@
   "version": "1.0.0",
   "publisher": "adaptive-solutions-group",
   "license": "MIT",
-  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/mpagani-adaptive/scriptguard"
@@ -27,7 +26,7 @@
     "netsuite governance"
   ],
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -83,17 +82,18 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "build": "npm run compile",
-    "package": "npx @vscode/vsce package"
+    "build": "node esbuild.config.mjs",
+    "package": "npm run build && npx @vscode/vsce package --no-dependencies"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "acorn": "^8.14.1",
-    "acorn-walk": "^8.3.4",
-    "@anthropic-ai/sdk": "^0.39.0"
+    "acorn-walk": "^8.3.4"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.28.0",
     "typescript": "^5.5.0"
   }
 }
